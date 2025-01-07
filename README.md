@@ -1,7 +1,8 @@
 # fiat_vehicle_mqtt
 Access Fiat vehicle data and send it periodically to an MQTT broker. Send command requests (e.g. lock/unlock the door) to your car.
 
-As this software is just communicating via an MQTT broker it could easily be integrated into any smarthome solution which is able to communicate with an MQTT broker. I have successfully integrated this into [FHEM](https://fhem.de/) (see also [FHEM Wiki](https://forum.fhem.de/index.php?topic=138861.0)).
+Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including my changes:
+
 
 ## Sources
 This software is based on [api.php](https://github.com/schmidmuc/fiat_vehicle/blob/main/api.php) from https://github.com/schmidmuc/fiat_vehicle with some small adjustments.
