@@ -37,7 +37,7 @@ GoogleApiKey = "<optional GoolgeApi key>"
 default_tz = Europe/Vienna
 ```
 
-The __sleep__ and __sleep_charging__ parameters defines the wait time between rereading the Fiat vehicle data. If the car is charing the update time will be done __sleep_charging__ seconds, whereas in normal condition vehicle data is polled every __sleep__ seconds. If one of these sleep times is missing there will be no automatic vehicle data poll.
+The __sleep__ and __sleep_charging__ parameters are defining the wait time between reading the Fiat vehicle data. If the car is charging a periodic update will be done in __sleep_charging__ seconds, whereas in normal condition vehicle data is polled every __sleep__ seconds. If one of these sleep times is missing there will be no automatic vehicle data poll.
 
 The [GoogleApiKey](https://support.google.com/googleapi/answer/6158862?hl=en) is needed to translate the latitude/longitude data read from your car to a real address. You could leave this empty if you do not need this.
 
