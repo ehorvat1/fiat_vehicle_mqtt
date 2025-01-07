@@ -56,6 +56,51 @@ function mqtt_publish($cfg, $vin, $payload) {
   }
 }
 
+
+function mqtt_publish_log($cfg, $vin, $logtext) {  //EHorvat added this
+  $clientId = 'Fiat_' . $vin;
+  $mqtt = mqtt_init($cfg, $clientId);
+  $ts = epoche2time(time());
+  $logtext = $ts . ' ' . $logtext;
+  try {
+    $mqtt->publish(
+      // topic
+      'fiat/' . $vin .'/lastLog',
+      // payload
+      $logtext,
+      // qos
+      1,
+      // retain
+      true
+    );
+    $mqtt->disconnect();
+  } catch (Throwable $e) {
+    fiat_log("MQTT publish failed: " . $e->getMessage());
+  }
+}
+ 
+
+function mqtt_publish_time($cfg) {  //EHorvat added this
+  $clientId = 'Fiat_';
+  $mqtt = mqtt_init($cfg, $clientId);
+  $ts = epoche2time(time());
+  try {
+    $mqtt->publish(
+      // topic
+      'fiat/php_time',
+      // payload
+      $ts,
+      // qos
+      1,
+      // retain
+      true
+    );
+    $mqtt->disconnect();
+  } catch (Throwable $e) {
+    fiat_log("MQTT publish failed: " . $e->getMessage());
+  }
+}
+
 function mqtt_subscribe($cfg) {
   fiat_log("child is starting subscriber for executing commands");
   while(1) {
@@ -79,7 +124,7 @@ function mqtt_subscribe($cfg) {
         $ts = epoche2time(time());
         fiat_log("Received message on topic [$topic]: $message");
         if ($message == "UPDATE") {
-          fiat_log("forced reading data");
+          fiat_log("forced reading of vehicle data");
           fiat_get_data($cfg);
         } elseif (isset($commands[$message])) {
           $vin = (explode("/", $topic))[1];
@@ -110,15 +155,21 @@ function fiat_command($cfg, $vin, $command) {
     $fiat = new apiFiat($cfg['fiat']['username'], $cfg['fiat']['password'], $cfg['fiat']['PIN']);
     if ($res = $fiat->apiCommand($vin, $command)) {
       fiat_log("got response '". $res['responseStatus'] . "' for command $command for vin '$vin'");
+      $logtext = "got response '". $res['responseStatus'] . "' for command $command for vin '$vin'"; //EHorvat added this
+      mqtt_publish_log($cfg['mqtt'], $vin, $logtext);  //EHorvat added this
     } else {
       $t = $fiat->getLogArray(false);
       $last = array_pop($t);
       fiat_log("command '$command' failed: " . $last['message']->message);
+      $logtext = "command '$command' failed: " . $last['message']->message; //EHorvat added this
+      mqtt_publish_log($cfg['mqtt'], $vin, $logtext);  //EHorvat added this
     }
   } catch (Throwable $e) {
     $responseBody = $e->getResponse()->getBody(true);
     print "command exception - $responseBody\n";
     print_r($e);
+    $logtext = "command exception - $responseBody"; //EHorvat added this
+    mqtt_publish_log($cfg['mqtt'], $vin, $logtext);  //EHorvat added this
   }
 }
 
@@ -167,6 +218,8 @@ function fiat_get_data($cfg) {
       'tyre_pressure_front_rigth' => $x['vehicle'][$vin]['status']['vehicleInfo']['tyrePressure']['1']['status'],
       'tyre_pressure_rear_left' => $x['vehicle'][$vin]['status']['vehicleInfo']['tyrePressure']['2']['status'],
       'tyre_pressure_rear_right' => $x['vehicle'][$vin]['status']['vehicleInfo']['tyrePressure']['3']['status'],
+      'batteryVoltage' => $x['vehicle'][$vin]['status']['vehicleInfo']['batteryInfo']['batteryVoltage'],            //EHorvat added this
+      'chargePowerPreference' => $x['vehicle'][$vin]['status']['evInfo']['chargePowerPreference'],                  //EHorvat added this
     );
 
     if (!empty($cfg['fiat']['GoogleApiKey'])) {
@@ -184,6 +237,8 @@ function fiat_get_data($cfg) {
     $is_charging = ($x['vehicle'][$vin]['status']['evInfo']['battery']['chargingStatus'] == "CHARGING") ? true : $is_charging;
     mqtt_publish($cfg['mqtt'], $vin, $payload);
     fiat_log("updated data for " . $data['nickname'] . "($vin)");
+    $logtext = "Updated data for " . $data['nickname'] . "($vin)";  //EHorvat added this
+    mqtt_publish_log($cfg['mqtt'], $vin, $logtext);  //EHorvat added this
   }
   return $is_charging;
 }
@@ -207,25 +262,41 @@ function fiat_log($text) {
 #### M A I N
 ######################################################
 $cfg = read_cfg();
-
+//
+if (!empty($cfg['Timezone']['default_tz'])) {                  //EHorvat added this
+  date_default_timezone_set($cfg['Timezone']['default_tz']);
+}
+//
 if (empty($cfg['fiat']['GoogleApiKey'])) {
   fiat_log("GoogleApiKey is empty, unable to translate location address");
 }
-
 $pid = pcntl_fork();
 if ($pid == -1) {
   die('could not fork');
 } else if ($pid) {
   // we are the parent
-  fiat_log("forked child with pid $pid");
-
-  // endless loop to read data every sleep seconds
-  while(1) {
-    #fiat_log("start reading data");
-    if (fiat_get_data($cfg)) {
-      sleep($cfg['fiat']['sleep_charging']);
+    fiat_log("forked child with pid $pid");
+  //  EHorvat added this
+    if ((empty($cfg['fiat']['sleep'])) or (empty($cfg['fiat']['sleep_charging']))) { // Any of the sleep times in fiat.cfg is empty? --> dont read vehicle data on a time base
+      fiat_log("File fiat.cfg does not contain valid sleep data .... no time based vehicle data update is done. Read data by issuing a UPDATE command via mqtt");
+      fiat_log("Now get data one time from vehicle on this script startup....");
+      fiat_get_data($cfg);  // get data from vehicle on script startup (in this case it is not done every "sleep" time)
+  }
+  //
+  // endless loop
+  while(1) {  
+                                                                                       //  EHorvat added this
+    if ((empty($cfg['fiat']['sleep'])) or (empty($cfg['fiat']['sleep_charging']))) {   // One of the fields "sleep" / "sleep_charging" in fiat.cfg is empty?
+                                                                                       // dont read vehicle data on a time base ... read vehicle data must be triggered by mqtt UPDATE command 
+      sleep(20);
+      mqtt_publish_time($cfg['mqtt']);                                                 // just publish Timestamt to topic "fiat/php_time" on a time basis (sleep (20))
     } else {
-      sleep($cfg['fiat']['sleep']);
+                                                                                       // endless loop to read data every sleep seconds ("sleep" AND "sleep_charging" must be defined in fiat.cfg)
+      if (fiat_get_data($cfg)) {
+        sleep($cfg['fiat']['sleep_charging']);
+      } else {
+        sleep($cfg['fiat']['sleep']);
+      }
     }
   }
   pcntl_wait($status); //Protect against Zombie children
