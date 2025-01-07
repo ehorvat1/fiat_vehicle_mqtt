@@ -7,6 +7,7 @@ Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including this changes:
 3) Set a timezone for logging timestamps. The timezone may be configured in config file **fiat.cfg** Timezone section. Valid timezone strings can be found here: https://www.php.net/manual/en/timezones.php
 4) Possibility to disable periodic data fetch from fiat cloud. If item **sleep** or **sleep_charging** in fiat.cfg is left empty then no periodic data read from fiat is happening. Data is read just one time at script start. A timestamp is sent every 20 seconds to MQTT item: fiat/php_time . So user has to trigger a data read manually by sending string "UPDATE" to the command MQTT topic fiat/"your vin"/command . Note: If the last data request is older than 5 minutes and car is charging a DEEPREFRESH is issued automatically (see function apiRequestALL in api.php)
 5) Added a basic version of config file **fiat.cfg** to the repo folder.
+6) Added more logging to function apiRequestAll in api.php
 
 
 ## Sources
