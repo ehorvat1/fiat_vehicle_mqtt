@@ -1,7 +1,7 @@
 # fiat_vehicle_mqtt
 Access Fiat vehicle data and send it periodically to an MQTT broker. Send command requests (e.g. lock/unlock the door) to your car.
 
-Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including my changes:
+Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including this changes:
 1) Added 2 datapoints: **batteryVoltage** (... but I dont know which Battery... value did not update...?? Added anyway) and **chargePowerPreference** (This is the charging speed set by vehicle, Level 1 to Level 5)
 2) Logging added to a MQTT item. The log message is sent to MQTT, item: fiat/"your vin"/lastLog . So this should hold the last issued Log Message.
 3) Set a timezone for logging timestamps. The timezone may be configured in config file **fiat.cfg** Timezone section. Valid timezone strings can be found here: https://www.php.net/manual/en/timezones.php
