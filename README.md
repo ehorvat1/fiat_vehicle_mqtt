@@ -6,6 +6,7 @@ Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including my changes:
 2) Logging added to a MQTT item. The log message is sent to MQTT, item: fiat/"your vin"/lastLog . So this should hold the last issued Log Message.
 3) Set a timezone for logging timestamps. The timezone may be configured in config file **fiat.cfg** Timezone section. Valid timezone strings can be found here: https://www.php.net/manual/en/timezones.php
 4) Possibility to disable periodic data fetch from fiat cloud. If item **sleep** or **sleep_charging** in fiat.cfg is left empty then no periodic data read from fiat is happening. Data is read just one time at script start. A timestamp is sent every 20 seconds to MQTT item: fiat/php_time . So user has to trigger a data read manually by sending string "UPDATE" to the command MQTT topic fiat/"your vin"/command . Note: If the last data request is older than 5 minutes and car is charging a DEEPREFRESH is issued automatically (see function apiRequestALL in api.php)
+5) Added a basic version of config file **fiat.cfg** to the repo folder.
 
 
 ## Sources
@@ -18,8 +19,8 @@ This software needs PHP 7.x to work and a running MQTT broker.
 After downloading the software you just need to create the configfile __fiat.cfg__ with at least the settings for your MQTT broker and your Uconnect account in the software download directory:
 ```
 [mqtt]
-server = <IP of your MQTT broker>
-port = <port of your MQTT broker>
+server = <IP of your MQTT broker e.g. 192.168.1.20>
+port = <port of your MQTT broker e.g. 1883>
 username = <username for MQTT broker, leave empty if not needed>
 password = <password for MQTT broker, leave empty if not needed>
 
@@ -27,9 +28,12 @@ password = <password for MQTT broker, leave empty if not needed>
 username = <Uconnect account email>
 password = <Uconnect account password>
 PIN = <PIN used in the Fiat app>
-sleep = 300
-sleep_charging = 60
+sleep = 7200
+sleep_charging = 360
 GoogleApiKey = "<optional GoolgeApi key>"
+
+[Timezone]
+default_tz = Europe/Vienna
 ```
 
 The __sleep__ parameter defines the wait time between rereading the Fiat vehicle data. The above example means, that the data will be updated every 300 seconds by default. If the car is charing the update time will be set to 60 seconds according to the parameter __sleep_charging__.
