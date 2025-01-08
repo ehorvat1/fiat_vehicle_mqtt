@@ -9,7 +9,7 @@ Fork from https://github.com/mahil4711/fiat_vehicle_mqtt including this changes:
 5) Added a basic version of config file **fiat.cfg** to the repo folder.
 6) Added more logging to function apiRequestAll in api.php
 7) Add 4 more items to MQTT payload: Unix_Timestamps expressed as "Seconds since Jan 01 1970" added 4x
-8) Reduced waiting time for DEEPREFRESH from 300 to 270 seconds. So external requests at a 300 sec rate are not canceled by timestamps which are off just by a few seconds.
+8) Reduced waiting time for DEEPREFRESH from 300 to 270 seconds. So external requests at a 300 sec rate are not canceled by timestamps which are off just by a few seconds. Modified file: api.php
 
 
 ## Sources
