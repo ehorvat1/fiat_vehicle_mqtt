@@ -655,7 +655,7 @@ class apiFiat {
 					$this->apiRequestVehicleLocation ( $vehicle['vin'] );
 
 					if ( 	$this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['battery']['chargingStatus'] == "CHARGING" &&
-							time() - $this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['timestamp']/1000 > 5*60 ) {
+							time() - $this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['timestamp']/1000 > 270 ) {   //EHorvat modified to > 270 (was > 5*60)
 
 						$this->appendToLogArray ( "Deep Refresh", "each 5 minutes", 3, 1 );
                         fiat_log("Deep Refresh .... each 5 minutes");  //EHorvat added this
@@ -675,7 +675,7 @@ class apiFiat {
 					}
 					
 					if ( 	$this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['ignitionStatus'] == "ON" &&
-							time() - $this->vehicleStatus[$vehicle['vin']]['location']['timeStamp']/1000 > 5*60 ) {
+							time() - $this->vehicleStatus[$vehicle['vin']]['location']['timeStamp']/1000 > 270 ) {        //EHorvat modified to  > 270 (was > 5*60)
 
 						$this->appendToLogArray ( "Location Update", "", 3, 1 );
                         fiat_log("Location Update..."); //EHorvat added this
@@ -685,7 +685,7 @@ class apiFiat {
 					else {
 						
 						$this->appendToLogArray ( "Location Update", "No location update, last update must be older than 5 minutes and vehicle must be moving", 3, 1 );
-                        fiat_log("No location update, last update must be older than 5 minutes and vehicle must be moving");//EHorvat added this
+                        fiat_log("No location update, last update must be older than 5 minutes and vehicle must be moving");   //EHorvat added this
 					}					
 				}
 			}
