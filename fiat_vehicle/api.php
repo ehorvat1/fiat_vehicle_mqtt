@@ -653,25 +653,26 @@ class apiFiat {
 
 					$this->apiRequestVehicleStatus ( $vehicle['vin'] );
 					$this->apiRequestVehicleLocation ( $vehicle['vin'] );
-
+                    $dr_age_sec = floor(time() - $this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['timestamp']/1000);
+                      
 					if ( 	$this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['battery']['chargingStatus'] == "CHARGING" &&
-							time() - $this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['timestamp']/1000 > 270 ) {   //EHorvat modified to > 270 (was > 5*60)
+							$dr_age_sec > 270 ) {   //EHorvat modified to > 270 (was > 5*60)
 
-						$this->appendToLogArray ( "Deep Refresh", "each 5 minutes", 3, 1 );
-                        fiat_log("Deep Refresh .... each 5 minutes");  //EHorvat added this
+						$this->appendToLogArray ( "Deep Refresh", "each 5 minutes", 3, 1 );                       
+                        fiat_log("Deep Refresh now .... each 5 minutes, last Deep Refresh done " .$dr_age_sec. " seconds ago");  //EHorvat added this
 						$this->apiCommand ( $vehicle['vin'], "DEEPREFRESH" );
 
 					}
 					else if ( 	$this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['battery']['chargingStatus'] == "CHARGING" ) {
 
 						$this->appendToLogArray ( "Deep Refresh", "No Deep Refresh (only once each 5 minutes)", 3, 1 );
-                        fiat_log("No Deep Refresh (only once each 5 minutes)");  //EHorvat added this
+                        fiat_log("Charging active, but no Deep Refresh (only once each 5 minutes), last Deep Refresh done " .$dr_age_sec. " seconds ago");  //EHorvat added this
 
 					}
 					else {
 						
 						$this->appendToLogArray ( "Deep Refresh", "No deep refresh, no charging process ongoing", 3, 1 );
-                        fiat_log("No deep refresh, no charging process ongoing");  //EHorvat added this
+                        fiat_log("No deep refresh, no charging process ongoing, last Deep Refresh done " .$dr_age_sec. " seconds ago");  //EHorvat added this
 					}
 					
 					if ( 	$this->vehicleStatus[$vehicle['vin']]['status']['evInfo']['ignitionStatus'] == "ON" &&
